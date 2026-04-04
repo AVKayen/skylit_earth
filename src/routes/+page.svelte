@@ -2,7 +2,7 @@
     import type { Photo, Section } from "$lib/types";
     import { onMount } from "svelte";
 
-    const CDN_URL = "https://avkayen.github.io/earthbound";
+    const CDN_URL = "https://cdn.skylit.studio";
 
     let sections: Section[] | null = $state<Section[] | null>(null);
     let sectionColumns: Array<Array<Photo[]>> = $state([]);
