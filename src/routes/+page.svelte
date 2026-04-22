@@ -1,16 +1,14 @@
 <script lang="ts">
-    import type { Photo, Section } from "$lib/types";
+    import type { PageData } from "./$types";
+    import type { Photo } from "$lib/types";
     import { onMount } from "svelte";
 
     const CDN_URL = "https://cdn.skylit.studio";
 
-    let sections: Section[] | null = $state<Section[] | null>(null);
-    let sectionColumns: Array<Array<Photo[]>> = $state([]);
+    let { data }: { data: PageData } = $props();
+    const sections = $derived(data.sections);
     let isWideScreen = $state(false);
-    let isLoading = $state(false);
-    let loadedPhotoIds = $state<Record<string, boolean>>({});
-
-    const isDesktopWidth = () => window.innerWidth > 900;
+    let hasResolvedViewport = $state(false);
     
     const getPhotoSrc = (id: string, extension: string) =>
         `${CDN_URL}/photos/${id}.${extension}`;
@@ -29,40 +27,30 @@
         return columns;
     };
 
-    const markImageLoaded = (id: string) => {
-        loadedPhotoIds = {
-            ...loadedPhotoIds,
-            [id]: true,
-        };
+    const sectionColumns = $derived.by(() =>
+        sections.map((section) => splitPhotosByColumn(section.photos))
+    );
+
+    const revealImage = (event: Event) => {
+        const target = event.currentTarget;
+        if (target instanceof HTMLImageElement) {
+            target.style.opacity = "1";
+        }
     };
 
-
     onMount(() => {
-        isWideScreen = isDesktopWidth();
-        isLoading = true;
+        const mediaQuery = window.matchMedia("(min-width: 901px)");
+        isWideScreen = mediaQuery.matches;
+        hasResolvedViewport = true;
 
-        const handleResize = () => {
-            isWideScreen = isDesktopWidth();
+        const handleMediaChange = (event: MediaQueryListEvent) => {
+            isWideScreen = event.matches;
         };
 
-        window.addEventListener("resize", handleResize);
-
-        fetch(`${CDN_URL}/sections.json`)
-            .then((response) => response.json())
-            .then((data) => {
-                sections = data;
-                
-            })
-            .finally(() => {
-                sectionColumns = (sections ?? []).map((section) =>
-                    splitPhotosByColumn(section.photos)
-                );
-                isLoading = false;
-            });
-
+        mediaQuery.addEventListener("change", handleMediaChange);
 
         return () => {
-            window.removeEventListener("resize", handleResize);
+            mediaQuery.removeEventListener("change", handleMediaChange);
         };
     });
 </script>
@@ -72,7 +60,7 @@
     <meta name="description" content="About this website and its creator" />
 </svelte:head>
 
-{#snippet photoCard(photo: Photo)}
+{#snippet photoCard(photo: Photo, index: number)}
     <figure class="photo-card">
         <div
             class="image-container"
@@ -87,15 +75,15 @@
                 />
             {/if}
             <img
-                class:loaded={loadedPhotoIds[photo.id]}
                 class="main-image"
                 src={getPhotoSrc(photo.id, photo.extension)}
                 alt={photo.title}
-                loading="lazy"
+                loading={index < 6 ? "eager" : "lazy"}
+                fetchpriority={index < 6 ? "high" : "auto"}
                 decoding="async"
                 width={photo.width}
                 height={photo.height}
-                onload={() => markImageLoaded(photo.id)}
+                onload={revealImage}
             />
         </div>
         <figcaption class="photo-caption">
@@ -106,7 +94,7 @@
 {/snippet}
 
 <div class="gallery-container">
-    {#if sections && sections.length > 0}
+    {#if (sections.length > 0) && hasResolvedViewport}
         {#each sections as section, sectionIndex}
             <section class="section">
                 {#if section.title}
@@ -119,15 +107,15 @@
                     <div class="masonry-grid">
                         {#each [1, 2, 3] as column}
                             <div class="masonry-column">
-                                {#each sectionColumns[sectionIndex]?.[column - 1] ?? [] as photo}
-                                    {@render photoCard(photo)}
+                                {#each sectionColumns[sectionIndex]?.[column - 1] ?? [] as photo, photoIndex}
+                                    {@render photoCard(photo, photoIndex)}
                                 {/each}
                             </div>
                         {/each}
                     </div>
                 {:else}
-                    {#each section.photos as photo}
-                        {@render photoCard(photo)}
+                    {#each section.photos as photo, photoIndex}
+                        {@render photoCard(photo, photoIndex)}
                     {/each}
                 {/if}
             </section>
@@ -142,16 +130,17 @@
                     <a href="mailto:sky@skylit.studio" class="addr">sky@skylit.studio</a>
                 </p>
                 <p class="crypto">
-                    <strong>BTC</strong> bc1q0c833xzl0mmefe3rsahmg93yzs40tm2x3e0x98
+                    <strong>BTC</strong>
+                    <span class="crypto-address">bc1q0c833xzl0mmefe3rsahmg93yzs40tm2x3e0x98</span>
                     <br />
-                    <strong>LTC</strong> ltc1qrkqtcuuuel8g20ea4kdsrfrhsy6nyj9n029ejn
+                    <strong>LTC</strong>
+                    <span class="crypto-address">ltc1qrkqtcuuuel8g20ea4kdsrfrhsy6nyj9n029ejn</span>
                 </p>
             </div>
         </div>
-    {:else if isLoading}
+    {:else if hasResolvedViewport}
         <div class="loading-initial">
-            <div class="loading-spinner"></div>
-            <p>Loading photos...</p>
+            <p>No photos available.</p>
         </div>
     {/if}
 </div>
@@ -236,10 +225,6 @@
         z-index: 2;
     }
 
-    .main-image.loaded {
-        opacity: 1;
-    }
-
     .photo-caption {
         margin-top: 0;
         display: flex;
@@ -288,6 +273,11 @@
         font-size: 0.8rem;
     }
 
+    .crypto-address {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
     .addr {
         color: inherit;
     }
@@ -299,26 +289,6 @@
         justify-content: center;
         padding: 2rem;
         min-height: 200px;
-    }
-
-    .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: 2px solid rgba(0, 0, 0, 0.15);
-        border-top-color: rgba(0, 0, 0, 0.55);
-        animation: spin 1s linear infinite;
-        margin-bottom: 1rem;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
     }
 
     .loading-initial p {
