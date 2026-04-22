@@ -4,6 +4,10 @@
     import { onMount } from "svelte";
 
     const CDN_URL = "https://cdn.skylit.studio";
+    const cryptoAddresses = [
+        { symbol: "BTC", address: "bc1q0c833xzl0mmefe3rsahmg93yzs40tm2x3e0x98" },
+        { symbol: "LTC", address: "ltc1qrkqtcuuuel8g20ea4kdsrfrhsy6nyj9n029ejn" },
+    ];
 
     let { data }: { data: PageData } = $props();
     const sections = $derived(data.sections);
@@ -130,11 +134,13 @@
                     <a href="mailto:sky@skylit.studio" class="addr">sky@skylit.studio</a>
                 </p>
                 <p class="crypto">
-                    <strong>BTC</strong>
-                    <span class="crypto-address">bc1q0c833xzl0mmefe3rsahmg93yzs40tm2x3e0x98</span>
-                    <br />
-                    <strong>LTC</strong>
-                    <span class="crypto-address">ltc1qrkqtcuuuel8g20ea4kdsrfrhsy6nyj9n029ejn</span>
+                    {#each cryptoAddresses as crypto, idx}
+                        <strong>{crypto.symbol}</strong>
+                        <span class="crypto-address">{crypto.address}</span>
+                        {#if idx < cryptoAddresses.length - 1}
+                            <br />
+                        {/if}
+                    {/each}
                 </p>
             </div>
         </div>
