@@ -122,6 +122,7 @@
                         {@render photoCard(photo, photoIndex)}
                     {/each}
                 {/if}
+                    <hr>
             </section>
         {/each}
 
@@ -159,23 +160,13 @@
     }
     .section-title h2 {
         font-size: 1.6rem;
-        font-weight: 400;
+        font-weight: 500;
         font-family: var(--font-main), serif;
         margin: 0;
     }
     .gallery-container {
         width: 100%;
         margin: 0;
-    }
-
-    .section {
-        margin-bottom: 48px;
-    }
-
-    .section h2 {
-        font-size: 1.4rem;
-        font-weight: 300;
-        font-family: var(--font-main), serif;
     }
 
     .masonry-grid {
@@ -304,7 +295,9 @@
         font-size: 1rem;
     }
 
-    @media (max-width: 900px) {
+    hr {
+        border: none;
+        border-top: 1px solid #eee;
+        margin: 24px 0;
     }
-
 </style>
