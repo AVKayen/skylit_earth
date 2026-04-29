@@ -15,7 +15,7 @@
     let hasResolvedViewport = $state(false);
     
     const getPhotoSrc = (id: string, extension: string) =>
-        `${CDN_URL}/photos/${id}.${extension}`;
+        `${CDN_URL}/photos/${id}.jpg`;
 
     const getLqipSrc = (lqip?: string) =>
         lqip ? `data:image/webp;base64,${lqip}` : "";
@@ -82,9 +82,8 @@
                 class="main-image"
                 src={getPhotoSrc(photo.id, photo.extension)}
                 alt={photo.title}
-                loading={index < 6 ? "eager" : "lazy"}
-                fetchpriority={index < 6 ? "high" : "auto"}
                 decoding="async"
+                loading="lazy"
                 width={photo.width}
                 height={photo.height}
                 onload={revealImage}
@@ -126,7 +125,7 @@
             </section>
         {/each}
 
-        <div class="info-grid-element">
+        <footer class="info-grid-element">
             <div class="info-content">
                 <h3>skylit/gallery</h3>
                 <p>
@@ -144,7 +143,7 @@
                     {/each}
                 </p>
             </div>
-        </div>
+        </footer>
     {:else if hasResolvedViewport}
         <div class="loading-initial">
             <p>No photos available.</p>
