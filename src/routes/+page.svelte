@@ -78,16 +78,18 @@
                     aria-hidden="true"
                 />
             {/if}
-            <img
-                class="main-image"
-                src={getPhotoSrc(photo.id, photo.extension)}
-                alt={photo.title}
-                decoding="async"
-                loading="lazy"
-                width={photo.width}
-                height={photo.height}
-                onload={revealImage}
-            />
+            <a href={getPhotoSrc(photo.id, photo.extension)} target="_blank" rel="noopener noreferrer" >
+                <img
+                    class="main-image"
+                    src={getPhotoSrc(photo.id, photo.extension)}
+                    alt={photo.title}
+                    decoding="async"
+                    loading="lazy"
+                    width={photo.width}
+                    height={photo.height}
+                    onload={revealImage}
+                />
+            </a>
         </div>
         <figcaption class="photo-caption">
             <span class="photo-id">{photo.id}</span>
